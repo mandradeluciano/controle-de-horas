@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Ponto da Babá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F1F5F0;
+    --surface:#FFFFFF;
+    --ink:#1F2E29;
+    --muted:#6C7B75;
+    --primary:#2F7A6B;
+    --primary-dark:#235E52;
+    --primary-soft:#E4F0EC;
+    --honey:#DB9A3C;
+    --honey-soft:#FBEED6;
+    --line:#E3EAE4;
+    --danger:#C15B4E;
+    --danger-soft:#F8E7E4;
+    --radius:16px;
+    --shadow:0 1px 2px rgba(31,46,41,.04), 0 6px 20px rgba(31,46,41,.06);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter',-apple-system,system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    font-size:16px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .num{font-variant-numeric:tabular-nums}
+  .display{font-family:'Bricolage Grotesque',sans-serif;letter-spacing:-.01em}
+
+  .app{max-width:540px;margin:0 auto;min-height:100vh;background:var(--bg);
+    padding:0 0 96px;position:relative}
+
+  header.top{
+    padding:20px 20px 14px;position:sticky;top:0;z-index:20;
+    background:linear-gradient(180deg,var(--bg) 70%,rgba(241,245,240,0));
+    backdrop-filter:blur(4px);
+  }
+  header.top h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;
+    font-size:22px;margin:0;letter-spacing:-.02em;display:flex;align-items:center;gap:9px}
+  header.top .dot{width:11px;height:11px;border-radius:50%;background:var(--honey);
+    box-shadow:0 0 0 4px var(--honey-soft)}
+  header.top p{margin:2px 0 0 20px;color:var(--muted);font-size:13px}
+
+  .screen{padding:0 20px;display:none}
+  .screen.active{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ---- hero resumo ---- */
+  .hero{
+    background:linear-gradient(150deg,var(--primary) 0%,var(--primary-dark) 100%);
+    color:#fff;border-radius:22px;padding:20px 20px 22px;margin-bottom:18px;
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;
+    background:radial-gradient(circle,rgba(255,255,255,.12),transparent 70%)}
+  .hero .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;opacity:.8;font-weight:600}
+  .hero .val{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:40px;
+    line-height:1;margin:6px 0 2px;letter-spacing:-.02em}
+  .hero .val small{font-size:22px;font-weight:700;opacity:.85}
+  .hero .under{width:52px;height:4px;background:var(--honey);border-radius:3px;margin:10px 0 14px}
+  .hero .stat-row{display:flex;gap:10px}
+  .hero .stat{flex:1;background:rgba(255,255,255,.12);border-radius:12px;padding:10px 12px}
+  .hero .stat b{font-family:'Bricolage Grotesque',sans-serif;display:block;font-size:18px;font-weight:700}
+  .hero .stat span{font-size:11px;opacity:.85}
+
+  /* ---- cards / sections ---- */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:14px;box-shadow:var(--shadow)}
+  .card h2{font-family:'Bricolage Grotesque',sans-serif;font-size:16px;font-weight:700;margin:0 0 14px;
+    display:flex;align-items:center;gap:8px}
+  .card h2 .ico{color:var(--primary)}
+
+  label.field{display:block;margin-bottom:14px}
+  label.field:last-child{margin-bottom:0}
+  label.field .cap{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+  input,select,textarea{
+    width:100%;font-family:inherit;font-size:16px;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:12px;padding:12px 13px;background:#fff;
+    transition:border-color .15s;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--primary);
+    box-shadow:0 0 0 3px var(--primary-soft)}
+  textarea{resize:vertical;min-height:56px}
+  .row{display:flex;gap:10px}
+  .row>*{flex:1}
+
+  /* prefix input for R$ */
+  .prefix{position:relative}
+  .prefix span{position:absolute;left:13px;top:50%;transform:translateY(-50%);
+    color:var(--muted);font-weight:600;pointer-events:none}
+  .prefix input{padding-left:34px}
+
+  /* segmented toggle */
+  .seg{display:flex;background:var(--primary-soft);border-radius:12px;padding:4px;gap:4px}
+  .seg button{flex:1;border:none;background:transparent;padding:10px;border-radius:9px;
+    font-family:inherit;font-size:14px;font-weight:600;color:var(--primary-dark);cursor:pointer;
+    transition:all .15s}
+  .seg button.on{background:#fff;color:var(--primary-dark);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+
+  .btn{width:100%;border:none;border-radius:13px;padding:15px;font-family:'Bricolage Grotesque',sans-serif;
+    font-size:16px;font-weight:700;cursor:pointer;transition:transform .08s,filter .15s;background:var(--primary);color:#fff}
+  .btn:active{transform:scale(.985)}
+  .btn.ghost{background:var(--primary-soft);color:var(--primary-dark)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* preview box in registrar */
+  .preview{background:var(--honey-soft);border:1px solid #F0DCB4;border-radius:14px;padding:14px;margin:2px 0 16px}
+  .preview .prow{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;font-size:14px}
+  .preview .prow .k{color:#8a6d35}
+  .preview .prow .v{font-weight:600}
+  .preview .total{border-top:1px dashed #E6C98A;margin-top:8px;padding-top:9px}
+  .preview .total .v{font-family:'Bricolage Grotesque',sans-serif;font-size:22px;font-weight:800;color:#a9741f}
+
+  /* entry rows */
+  .entry{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line)}
+  .entry:last-child{border-bottom:none}
+  .entry .date{width:46px;text-align:center;flex:none}
+  .entry .date .d{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:700;line-height:1}
+  .entry .date .m{font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em}
+  .entry .mid{flex:1;min-width:0}
+  .entry .mid .t{font-size:14px;font-weight:600}
+  .entry .mid .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .entry .mid .ex{color:var(--honey);font-weight:600}
+  .entry .amt{text-align:right;flex:none}
+  .entry .amt .money{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:15px}
+  .entry .amt .hrs{font-size:12px;color:var(--muted)}
+  .entry .del{flex:none;border:none;background:var(--danger-soft);color:var(--danger);
+    width:32px;height:32px;border-radius:9px;font-size:16px;cursor:pointer;line-height:1}
+
+  /* report period buckets */
+  .bucket{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
+  .bucket .head{padding:15px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+  .bucket .head .lbl{font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:15px}
+  .bucket .head .lbl small{display:block;font-family:'Inter';font-weight:500;font-size:12px;color:var(--muted)}
+  .bucket .head .money{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:18px;color:var(--primary-dark)}
+  .bucket .head .chev{color:var(--muted);transition:transform .2s;margin-left:8px}
+  .bucket.open .chev{transform:rotate(90deg)}
+  .bucket .body{display:none;padding:0 16px 8px;border-top:1px solid var(--line)}
+  .bucket.open .body{display:block}
+  .bucket .metrics{display:flex;gap:8px;padding:12px 0}
+  .bucket .metric{flex:1;background:var(--primary-soft);border-radius:10px;padding:8px 10px;text-align:center}
+  .bucket .metric b{font-family:'Bricolage Grotesque',sans-serif;display:block;font-size:15px;color:var(--primary-dark)}
+  .bucket .metric span{font-size:11px;color:var(--muted)}
+
+  .empty{text-align:center;padding:40px 20px;color:var(--muted)}
+  .empty .big{font-size:40px;margin-bottom:6px}
+  .empty p{margin:4px 0;font-size:14px}
+
+  .hint{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.4}
+
+  /* ---- ponto ao vivo ---- */
+  .live{text-align:center}
+  .live .eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted);display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:14px}
+  .live .pulse{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .live.on .eyebrow{color:var(--primary)}
+  .live.on .pulse{background:#3fbf7f;animation:beat 1.4s ease-in-out infinite;box-shadow:0 0 0 0 rgba(63,191,127,.5)}
+  @keyframes beat{0%{box-shadow:0 0 0 0 rgba(63,191,127,.5)}70%{box-shadow:0 0 0 8px rgba(63,191,127,0)}100%{box-shadow:0 0 0 0 rgba(63,191,127,0)}}
+  .live .timer{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:52px;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .live .idle-timer{color:var(--line)}
+  .live .since{font-size:13px;color:var(--muted);margin:8px 0 18px}
+  .live .idle-msg{font-size:14px;color:var(--muted);margin:6px 0 18px}
+  .live .btn-start{background:var(--primary)}
+  .live .btn-stop{background:var(--honey)}
+  .live .finish-box{background:var(--primary-soft);border-radius:14px;padding:14px;margin:4px 0 14px;text-align:left}
+  .live .finish-box .frow{display:flex;justify-content:space-between;padding:3px 0;font-size:14px}
+  .live .finish-box .frow .k{color:var(--muted)}
+  .live .finish-box .frow .v{font-weight:600}
+  .live .finish-box label{display:block;margin-top:10px;font-size:13px;font-weight:600;color:var(--muted)}
+  .live .finish-box input{margin-top:5px}
+  .live .finish-box .ftotal{border-top:1px dashed #cfe0da;margin-top:10px;padding-top:9px}
+  .live .finish-box .ftotal .v{font-family:'Bricolage Grotesque',sans-serif;font-size:20px;font-weight:800;color:var(--primary-dark)}
+  .live .two{display:flex;gap:10px}
+  .live .two .btn{flex:1}
+
+  /* bottom nav */
+  nav.tabs{position:fixed;bottom:0;left:0;right:0;background:var(--surface);
+    border-top:1px solid var(--line);display:flex;z-index:30;padding-bottom:env(safe-area-inset-bottom)}
+  nav.tabs .app-w{max-width:540px;margin:0 auto;display:flex;width:100%}
+  nav.tabs button{flex:1;border:none;background:none;padding:10px 4px 12px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);font-family:inherit}
+  nav.tabs button.on{color:var(--primary)}
+  nav.tabs button svg{width:23px;height:23px}
+  nav.tabs button span{font-size:11px;font-weight:600}
+
+  /* ---- login / banner ---- */
+  #auth-gate{position:fixed;inset:0;z-index:100;background:var(--bg);
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .auth-box{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);
+    border-radius:22px;padding:28px 24px;box-shadow:var(--shadow)}
+  .auth-logo{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;
+    display:flex;align-items:center;gap:9px;letter-spacing:-.02em}
+  .auth-logo .dot{width:11px;height:11px;border-radius:50%;background:var(--honey);box-shadow:0 0 0 4px var(--honey-soft)}
+  .auth-sub{color:var(--muted);font-size:14px;margin:8px 0 20px}
+  .auth-box input{margin-bottom:12px}
+  .auth-err{color:var(--danger);font-size:13px;font-weight:600;min-height:18px;margin-bottom:6px}
+  #local-banner{background:var(--honey-soft);color:#8a6d35;font-size:12.5px;font-weight:600;
+    text-align:center;padding:9px 16px;border-bottom:1px solid #F0DCB4}
+
+  .toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:11px 18px;border-radius:30px;font-size:14px;font-weight:600;
+    opacity:0;pointer-events:none;transition:all .3s;z-index:50;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<!-- ====== Firebase (SDK modular v10). Preencha firebaseConfig com os dados do SEU projeto. ====== -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
+  import { getFirestore, doc, getDoc, setDoc, deleteField }
+    from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+  // >>>>>>>>>>>>  COLE AQUI A CONFIG DO SEU PROJETO FIREBASE  <<<<<<<<<<<<
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXWpqF9xMN5BviKNHcts3WE7ONAMMd0sM",
+    authDomain: "controle-de-horas-5a016.firebaseapp.com",
+    projectId: "controle-de-horas-5a016",
+    storageBucket: "controle-de-horas-5a016.firebasestorage.app",
+    messagingSenderId: "481868234148",
+    appId: "1:481868234148:web:a41f8e1862cd76d1945531"
+  };
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  const configured = !/COLE_|SEU_PROJETO/.test(firebaseConfig.apiKey + firebaseConfig.projectId);
+  try{
+    if(configured){
+      const app = initializeApp(firebaseConfig);
+      window.FB = { configured:true, auth:getAuth(app), db:getFirestore(app),
+        doc, getDoc, setDoc, deleteField,
+        onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut };
+    } else {
+      window.FB = { configured:false };
+    }
+  }catch(e){ console.error("Falha ao iniciar Firebase:", e); window.FB = { configured:false }; }
+
+  if(window.startApp) window.startApp();
+  else window.addEventListener('DOMContentLoaded', ()=> window.startApp && window.startApp());
+</script>
+
+<!-- ====== Tela de login (só aparece no modo online) ====== -->
+<div id="auth-gate" style="display:none">
+  <div class="auth-box">
+    <div class="auth-logo"><span class="dot"></span> Ponto da Babá</div>
+    <p class="auth-sub">Entre para acessar seus registros de qualquer aparelho.</p>
+    <input type="email" id="auth-email" placeholder="Seu e-mail" autocomplete="email">
+    <input type="password" id="auth-pass" placeholder="Sua senha (mín. 6 caracteres)" autocomplete="current-password">
+    <div class="auth-err" id="auth-err"></div>
+    <button class="btn" id="auth-entrar">Entrar</button>
+    <button class="btn ghost" id="auth-criar" style="margin-top:10px">Criar uma conta</button>
+  </div>
+</div>
+
+<div class="app">
+  <div id="local-banner" style="display:none">Modo local — os dados ficam só neste navegador. Configure o Firebase para sincronizar online.</div>
+  <header class="top">
+    <h1><span class="dot"></span><span id="appName">Ponto da Babá</span></h1>
+    <p id="appSub">Apontamento de horas e cálculo de pagamento</p>
+  </header>
+
+  <!-- ============ REGISTRAR ============ -->
+  <section class="screen active" id="scr-registrar">
+    <div class="card live" id="live-card"></div>
+
+    <div class="card">
+      <h2><span class="ico">📝</span> Registro manual</h2>
+      <label class="field">
+        <span class="cap">Data</span>
+        <input type="date" id="in-data">
+      </label>
+      <div class="row">
+        <label class="field">
+          <span class="cap">Entrada</span>
+          <input type="time" id="in-entrada">
+        </label>
+        <label class="field">
+          <span class="cap">Saída</span>
+          <input type="time" id="in-saida">
+        </label>
+      </div>
+      <label class="field">
+        <span class="cap">Intervalo — almoço/descanso (minutos)</span>
+        <input type="number" id="in-intervalo" min="0" step="5" placeholder="0" inputmode="numeric">
+      </label>
+      <label class="field">
+        <span class="cap">Observação (opcional)</span>
+        <input type="text" id="in-obs" placeholder="Ex.: levou as crianças ao pediatra">
+      </label>
+
+      <div class="preview" id="preview">
+        <div class="prow"><span class="k">Horas trabalhadas</span><span class="v num" id="pv-trab">—</span></div>
+        <div class="prow"><span class="k">Horas normais</span><span class="v num" id="pv-norm">—</span></div>
+        <div class="prow"><span class="k">Horas extras</span><span class="v num" id="pv-extra">—</span></div>
+        <div class="prow total"><span class="k">Valor do dia</span><span class="v num" id="pv-total">—</span></div>
+      </div>
+
+      <button class="btn" id="btn-salvar">Salvar registro</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="ico">📅</span> Últimos registros</h2>
+      <div id="recent-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ RELATÓRIOS ============ -->
+  <section class="screen" id="scr-relatorios">
+    <div class="hero">
+      <div class="lbl" id="hero-lbl">Este mês</div>
+      <div class="val num"><small>R$</small> <span id="hero-val">0,00</span></div>
+      <div class="under"></div>
+      <div class="stat-row">
+        <div class="stat"><b class="num" id="hero-trab">0h</b><span>trabalhadas</span></div>
+        <div class="stat"><b class="num" id="hero-extra">0h</b><span>extras</span></div>
+        <div class="stat"><b class="num" id="hero-dias">0</b><span>dias</span></div>
+      </div>
+    </div>
+
+    <div class="seg" id="seg-periodo" style="margin-bottom:16px">
+      <button data-p="dia">Diário</button>
+      <button data-p="semana">Semanal</button>
+      <button data-p="quinzena" class="on">Quinzenal</button>
+      <button data-p="mes">Mensal</button>
+    </div>
+
+    <div id="report-list"></div>
+  </section>
+
+  <!-- ============ AJUSTES ============ -->
+  <section class="screen" id="scr-ajustes">
+    <div class="card">
+      <h2><span class="ico">⚙️</span> Configuração</h2>
+      <label class="field">
+        <span class="cap">Nome da babá (opcional)</span>
+        <input type="text" id="cf-nome" placeholder="Ex.: Dona Maria">
+      </label>
+      <label class="field">
+        <span class="cap">Valor da hora</span>
+        <div class="prefix"><span>R$</span><input type="number" id="cf-valor" min="0" step="0.5" inputmode="decimal" placeholder="0,00"></div>
+      </label>
+      <label class="field">
+        <span class="cap">Jornada padrão por dia</span>
+        <div class="seg" id="seg-jornada">
+          <button data-j="8" class="on">8 horas</button>
+          <button data-j="12">12 horas</button>
+        </div>
+        <div class="hint">Horas acima da jornada no mesmo dia contam como hora extra.</div>
+      </label>
+      <label class="field">
+        <span class="cap">Adicional de hora extra (%)</span>
+        <input type="number" id="cf-extra" min="0" step="5" inputmode="numeric" placeholder="50">
+        <div class="hint">Ex.: 50% significa que a hora extra vale 1,5× o valor normal.</div>
+      </label>
+      <label class="field">
+        <span class="cap">Intervalo padrão (minutos)</span>
+        <input type="number" id="cf-intervalo" min="0" step="5" inputmode="numeric" placeholder="0">
+        <div class="hint">Sugestão que já vem preenchida ao criar um novo registro.</div>
+      </label>
+      <button class="btn" id="btn-config">Salvar configuração</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="ico">📤</span> Seus dados</h2>
+      <div class="hint" id="sync-status" style="margin-top:0;margin-bottom:12px">Os registros ficam salvos automaticamente neste aparelho.</div>
+      <button class="btn ghost" id="btn-export" style="margin-bottom:10px">Exportar registros (copiar)</button>
+      <button class="btn ghost" id="btn-limpar" style="background:var(--danger-soft);color:var(--danger);margin-bottom:10px">Apagar todos os registros</button>
+      <button class="btn ghost" id="btn-logout" style="display:none">Sair da conta</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<nav class="tabs">
+  <div class="app-w">
+    <button data-scr="registrar" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <span>Registrar</span>
+    </button>
+    <button data-scr="relatorios">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="8"/><rect x="12" y="6" width="3" height="12"/><rect x="17" y="13" width="3" height="5"/></svg>
+      <span>Relatórios</span>
+    </button>
+    <button data-scr="ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"/></svg>
+      <span>Ajustes</span>
+    </button>
+  </div>
+</nav>
+
+<script>
+/* ---------------- Estado + persistência ----------------
+   backend 'firebase' = online (Firestore) · 'local' = neste aparelho  */
+let backend='local';
+let uid=null;
+const cache={};   // espelho dos campos do documento do usuário (strings JSON)
+const mem={};     // fallback puramente local
+
+const store = {
+  async get(key){
+    if(backend==='firebase') return (key in cache && cache[key]!=null) ? cache[key] : null;
+    try{ if(window.storage){ const r=await window.storage.get(key); return r?r.value:null; } }
+    catch(e){}
+    return (key in mem)? mem[key] : null;
+  },
+  async set(key,val){
+    if(backend==='firebase'){
+      cache[key]=val;
+      try{ await window.FB.setDoc(window.FB.doc(window.FB.db,'usuarios',uid),{[key]:val},{merge:true}); }
+      catch(e){ console.error('salvar',e); toast('Erro ao salvar online'); }
+      return;
+    }
+    mem[key]=val;
+    try{ if(window.storage){ await window.storage.set(key,val); } }catch(e){}
+  },
+  async del(key){
+    if(backend==='firebase'){
+      delete cache[key];
+      try{ await window.FB.setDoc(window.FB.doc(window.FB.db,'usuarios',uid),{[key]:window.FB.deleteField()},{merge:true}); }catch(e){}
+      return;
+    }
+    delete mem[key];
+    try{ if(window.storage){ await window.storage.delete(key); } }catch(e){}
+  }
+};
+
+async function loadRemote(){
+  for(const k in cache) delete cache[k];
+  const snap=await window.FB.getDoc(window.FB.doc(window.FB.db,'usuarios',uid));
+  if(snap.exists()){ const d=snap.data(); for(const k in d) cache[k]=d[k]; }
+}
+
+const defaultCfg = { nome:"", valorHora:0, jornada:8, extraPct:50, intervalo:0 };
+let cfg = {...defaultCfg};
+let registros = []; // {id, data, entrada, saida, intervalo, obs}
+
+/* ---------------- Utilidades ---------------- */
+const BRL = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+const fmtMoney = v => BRL.format(v||0);
+const fmtMoneyNum = v => (v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+function fmtHoras(h){
+  if(!h) return "0h";
+  const tot=Math.round(h*60), hh=Math.floor(tot/60), mm=tot%60;
+  return mm===0 ? hh+"h" : hh+"h"+String(mm).padStart(2,'0');
+}
+const MESES=["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+const MESES_LONG=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+function parseDate(s){ const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+function toMin(t){ if(!t) return null; const [h,m]=t.split(':').map(Number); return h*60+m; }
+
+/* cálculo de um registro */
+function calc(reg){
+  const e=toMin(reg.entrada), s=toMin(reg.saida);
+  if(e===null||s===null) return null;
+  let dur = s - e;
+  if(dur<=0) dur+=1440;              // cruzou a meia-noite (turno noturno)
+  dur -= (reg.intervalo||0);
+  if(dur<0) dur=0;
+  const trab = dur/60;
+  const jornada = cfg.jornada;
+  const normal = Math.min(trab, jornada);
+  const extra = Math.max(0, trab - jornada);
+  const vNormal = normal * cfg.valorHora;
+  const vExtra = extra * cfg.valorHora * (1 + cfg.extraPct/100);
+  return { trab, normal, extra, vNormal, vExtra, total:vNormal+vExtra };
+}
+
+/* ---------------- Toast ---------------- */
+let toastT;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+/* ---------------- Navegação ---------------- */
+document.querySelectorAll('nav.tabs button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('nav.tabs button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('scr-'+b.dataset.scr).classList.add('active');
+    if(b.dataset.scr==='relatorios') renderReport();
+    if(b.dataset.scr==='registrar'){ renderLive(); renderRecent(); }
+    window.scrollTo(0,0);
+  };
+});
+
+/* ---------------- Registrar: preview ao vivo ---------------- */
+function readForm(){
+  return {
+    data: document.getElementById('in-data').value,
+    entrada: document.getElementById('in-entrada').value,
+    saida: document.getElementById('in-saida').value,
+    intervalo: parseInt(document.getElementById('in-intervalo').value)||0,
+    obs: document.getElementById('in-obs').value.trim()
+  };
+}
+function updatePreview(){
+  const r=readForm();
+  const c=calc(r);
+  const set=(id,v)=>document.getElementById(id).textContent=v;
+  if(!c){
+    set('pv-trab','—');set('pv-norm','—');set('pv-extra','—');set('pv-total','—');
+    return;
+  }
+  set('pv-trab',fmtHoras(c.trab));
+  set('pv-norm',fmtHoras(c.normal));
+  set('pv-extra',fmtHoras(c.extra)+(c.extra>0?"  ("+fmtMoney(c.vExtra)+")":""));
+  set('pv-total',fmtMoney(c.total));
+}
+['in-data','in-entrada','in-saida','in-intervalo'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',updatePreview);
+});
+
+/* salvar registro */
+document.getElementById('btn-salvar').onclick=async()=>{
+  const r=readForm();
+  if(!r.data){ toast('Escolha a data'); return; }
+  if(!r.entrada||!r.saida){ toast('Preencha entrada e saída'); return; }
+  if(cfg.valorHora<=0){ toast('Defina o valor da hora em Ajustes'); }
+  r.id=Date.now()+"-"+Math.random().toString(36).slice(2,6);
+  registros.push(r);
+  await store.set('registros',JSON.stringify(registros));
+  toast('Registro salvo ✓');
+  // reset parcial: mantém data, limpa horas
+  document.getElementById('in-entrada').value='';
+  document.getElementById('in-saida').value='';
+  document.getElementById('in-obs').value='';
+  document.getElementById('in-intervalo').value=cfg.intervalo||'';
+  updatePreview();
+  renderRecent();
+};
+
+async function delRegistro(id){
+  registros=registros.filter(r=>r.id!==id);
+  await store.set('registros',JSON.stringify(registros));
+  renderRecent(); renderReport();
+  toast('Registro removido');
+}
+
+/* lista recente */
+function entryHTML(r){
+  const c=calc(r)||{trab:0,extra:0,total:0};
+  const d=parseDate(r.data);
+  const dia=d.getDate(), mes=MESES[d.getMonth()];
+  const sub=`${r.entrada}–${r.saida}${r.intervalo?` · ${r.intervalo}min int.`:''}` + (r.obs?` · ${r.obs}`:'');
+  const extraTag=c.extra>0?`<span class="ex"> · +${fmtHoras(c.extra)} extra</span>`:'';
+  return `<div class="entry">
+    <div class="date"><div class="d num">${dia}</div><div class="m">${mes}</div></div>
+    <div class="mid">
+      <div class="t num">${fmtHoras(c.trab)}${extraTag}</div>
+      <div class="sub">${escapeHtml(sub)}</div>
+    </div>
+    <div class="amt">
+      <div class="money num">${fmtMoney(c.total)}</div>
+    </div>
+    <button class="del" onclick="delRegistro('${r.id}')" aria-label="Remover">✕</button>
+  </div>`;
+}
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function renderRecent(){
+  const box=document.getElementById('recent-list');
+  if(registros.length===0){
+    box.innerHTML=`<div class="empty"><div class="big">🍼</div><p>Nenhum registro ainda.</p><p>Preencha o formulário acima para começar.</p></div>`;
+    return;
+  }
+  const sorted=[...registros].sort((a,b)=>b.data.localeCompare(a.data)||b.id.localeCompare(a.id));
+  box.innerHTML=sorted.slice(0,8).map(entryHTML).join('');
+}
+
+/* ---------------- Ponto ao vivo ---------------- */
+let sessao=null;      // {inicio: ISO}
+let finishing=false;  // tela de confirmação do encerramento
+let liveInt=null;
+
+function hhmm(d){return pad2(d.getHours())+':'+pad2(d.getMinutes());}
+function ymd(d){return `${d.getFullYear()}-${pad2(d.getMonth()+1)}-${pad2(d.getDate())}`;}
+function fmtElapsed(ms){
+  const s=Math.max(0,Math.floor(ms/1000));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  return `${pad2(h)}:${pad2(m)}:${pad2(sec)}`;
+}
+function startTicking(){
+  stopTicking();
+  liveInt=setInterval(()=>{
+    const el=document.getElementById('live-timer');
+    if(el&&sessao){ el.textContent=fmtElapsed(Date.now()-new Date(sessao.inicio).getTime()); }
+    else stopTicking();
+  },1000);
+}
+function stopTicking(){ if(liveInt){clearInterval(liveInt);liveInt=null;} }
+
+async function startSession(){
+  sessao={inicio:new Date().toISOString()};
+  finishing=false;
+  await store.set('sessao',JSON.stringify(sessao));
+  renderLive(); startTicking();
+  toast('Chegada registrada ✓');
+}
+function pedirEncerrar(){ finishing=true; renderLive(); }
+function voltarSessao(){ finishing=false; renderLive(); startTicking(); }
+
+function finishRegistro(){
+  const ini=new Date(sessao.inicio), fim=new Date();
+  const intervalo=parseInt(document.getElementById('fin-int')?.value)||0;
+  return { data:ymd(ini), entrada:hhmm(ini), saida:hhmm(fim), intervalo, obs:'' };
+}
+function updateFinishPreview(){
+  if(!sessao) return;
+  const r=finishRegistro(); const c=calc(r);
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+  if(c){ set('fin-horas',fmtHoras(c.trab)); set('fin-total',fmtMoney(c.total)); }
+}
+async function confirmarEncerrar(){
+  const r=finishRegistro();
+  r.id=Date.now()+"-"+Math.random().toString(36).slice(2,6);
+  registros.push(r);
+  await store.set('registros',JSON.stringify(registros));
+  sessao=null; finishing=false; stopTicking();
+  await store.del('sessao');
+  renderLive(); renderRecent();
+  toast('Expediente salvo ✓');
+}
+
+function renderLive(){
+  const box=document.getElementById('live-card');
+
+  // Encerrando: confirmar horários e intervalo
+  if(sessao && finishing){
+    stopTicking();
+    const r=finishRegistro();
+    box.className='card live on';
+    box.innerHTML=`
+      <div class="eyebrow"><span class="pulse"></span> Encerrar expediente</div>
+      <div class="finish-box">
+        <div class="frow"><span class="k">Chegada</span><span class="v num">${r.entrada}</span></div>
+        <div class="frow"><span class="k">Saída (agora)</span><span class="v num">${r.saida}</span></div>
+        <label for="fin-int">Intervalo — almoço/descanso (min)</label>
+        <input type="number" id="fin-int" min="0" step="5" value="${cfg.intervalo||0}" inputmode="numeric">
+        <div class="frow" style="margin-top:12px"><span class="k">Horas trabalhadas</span><span class="v num" id="fin-horas">—</span></div>
+        <div class="frow ftotal"><span class="k">Valor do dia</span><span class="v num" id="fin-total">—</span></div>
+      </div>
+      <div class="two">
+        <button class="btn ghost" onclick="voltarSessao()">Voltar</button>
+        <button class="btn" onclick="confirmarEncerrar()">Salvar expediente</button>
+      </div>`;
+    document.getElementById('fin-int').addEventListener('input',updateFinishPreview);
+    updateFinishPreview();
+    return;
+  }
+
+  // Em andamento
+  if(sessao){
+    const ini=new Date(sessao.inicio);
+    box.className='card live on';
+    box.innerHTML=`
+      <div class="eyebrow"><span class="pulse"></span> Expediente em andamento</div>
+      <div class="timer num" id="live-timer">${fmtElapsed(Date.now()-ini.getTime())}</div>
+      <div class="since">Chegada às ${hhmm(ini)} · ${['dom','seg','ter','qua','qui','sex','sáb'][ini.getDay()]}, ${pad2(ini.getDate())}/${pad2(ini.getMonth()+1)}</div>
+      <button class="btn btn-stop" onclick="pedirEncerrar()">■ Encerrar expediente</button>`;
+    startTicking();
+    return;
+  }
+
+  // Parado
+  box.className='card live';
+  box.innerHTML=`
+    <div class="eyebrow"><span class="pulse"></span> Ponto ao vivo</div>
+    <div class="timer idle-timer num">00:00:00</div>
+    <div class="idle-msg">Toque quando a babá chegar. O tempo corre sozinho até você encerrar.</div>
+    <button class="btn btn-start" onclick="startSession()">▶ Registrar chegada agora</button>`;
+}
+
+/* ---------------- Relatórios ---------------- */
+let periodo='quinzena';
+document.querySelectorAll('#seg-periodo button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#seg-periodo button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); periodo=b.dataset.p; renderReport();
+  };
+});
+
+function weekRange(d){ // segunda a domingo
+  const day=(d.getDay()+6)%7; // 0=segunda
+  const start=new Date(d); start.setDate(d.getDate()-day);
+  const end=new Date(start); end.setDate(start.getDate()+6);
+  return [start,end];
+}
+function pad2(n){return String(n).padStart(2,'0');}
+
+function bucketKey(r){
+  const d=parseDate(r.data);
+  if(periodo==='dia') return {key:r.data, sort:r.data};
+  if(periodo==='mes'){ const k=`${d.getFullYear()}-${pad2(d.getMonth()+1)}`; return {key:k,sort:k}; }
+  if(periodo==='quinzena'){
+    const q=d.getDate()<=15?1:2;
+    const k=`${d.getFullYear()}-${pad2(d.getMonth()+1)}-Q${q}`; return {key:k,sort:k};
+  }
+  // semana
+  const [s]=weekRange(d);
+  const k=`${s.getFullYear()}-${pad2(s.getMonth()+1)}-${pad2(s.getDate())}`;
+  return {key:k,sort:k};
+}
+function bucketLabel(key){
+  if(periodo==='dia'){
+    const d=parseDate(key);
+    return {lbl:`${pad2(d.getDate())} de ${MESES_LONG[d.getMonth()]}`, sub:['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()]+', '+d.getFullYear()};
+  }
+  if(periodo==='mes'){
+    const [y,m]=key.split('-').map(Number);
+    return {lbl:`${MESES_LONG[m-1]}`, sub:String(y)};
+  }
+  if(periodo==='quinzena'){
+    const [y,m,q]=key.split('-'); const qn=q==='Q1'?'1ª':'2ª';
+    const range=q==='Q1'?'dia 1 ao 15':'dia 16 ao fim';
+    return {lbl:`${qn} quinzena · ${MESES_LONG[Number(m)-1]}`, sub:`${range} · ${y}`};
+  }
+  // semana
+  const s=parseDate(key); const e=new Date(s); e.setDate(s.getDate()+6);
+  return {lbl:`Semana de ${pad2(s.getDate())}/${pad2(s.getMonth()+1)}`, sub:`até ${pad2(e.getDate())}/${pad2(e.getMonth()+1)}/${e.getFullYear()}`};
+}
+
+const openBuckets=new Set();
+function toggleBucket(k){ if(openBuckets.has(k))openBuckets.delete(k); else openBuckets.add(k); renderReport(); }
+
+function renderReport(){
+  // hero = período atual (mês corrente por padrão de referência) -> usamos totais gerais do mês atual
+  const now=new Date();
+  const curMonth=`${now.getFullYear()}-${pad2(now.getMonth()+1)}`;
+  let hTrab=0,hExtra=0,hVal=0; const diasSet=new Set();
+  registros.forEach(r=>{
+    const d=parseDate(r.data);
+    if(`${d.getFullYear()}-${pad2(d.getMonth()+1)}`===curMonth){
+      const c=calc(r); if(c){hTrab+=c.trab;hExtra+=c.extra;hVal+=c.total;diasSet.add(r.data);}
+    }
+  });
+  document.getElementById('hero-lbl').textContent=`${MESES_LONG[now.getMonth()]} de ${now.getFullYear()}`;
+  document.getElementById('hero-val').textContent=fmtMoneyNum(hVal);
+  document.getElementById('hero-trab').textContent=fmtHoras(hTrab);
+  document.getElementById('hero-extra').textContent=fmtHoras(hExtra);
+  document.getElementById('hero-dias').textContent=diasSet.size;
+
+  const box=document.getElementById('report-list');
+  if(registros.length===0){
+    box.innerHTML=`<div class="empty"><div class="big">📊</div><p>Sem dados para exibir.</p><p>Adicione registros na aba Registrar.</p></div>`;
+    return;
+  }
+  // agrupa
+  const groups={};
+  registros.forEach(r=>{
+    const {key}=bucketKey(r);
+    (groups[key]=groups[key]||[]).push(r);
+  });
+  const keys=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+  box.innerHTML=keys.map(k=>{
+    const items=groups[k].sort((a,b)=>b.data.localeCompare(a.data));
+    let t=0,n=0,ex=0,val=0;
+    items.forEach(r=>{const c=calc(r);if(c){t+=c.trab;n+=c.normal;ex+=c.extra;val+=c.total;}});
+    const {lbl,sub}=bucketLabel(k);
+    const open=openBuckets.has(k)?'open':'';
+    const rows=items.map(entryHTML).join('');
+    return `<div class="bucket ${open}">
+      <div class="head" onclick="toggleBucket('${k}')">
+        <div class="lbl">${lbl}<small>${sub} · ${items.length} ${items.length===1?'dia':'dias'}</small></div>
+        <div style="display:flex;align-items:center">
+          <div class="money num">${fmtMoney(val)}</div>
+          <span class="chev">›</span>
+        </div>
+      </div>
+      <div class="body">
+        <div class="metrics">
+          <div class="metric"><b class="num">${fmtHoras(t)}</b><span>trabalhadas</span></div>
+          <div class="metric"><b class="num">${fmtHoras(ex)}</b><span>extras</span></div>
+          <div class="metric"><b class="num">${fmtMoney(val)}</b><span>total</span></div>
+        </div>
+        ${rows}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------------- Ajustes ---------------- */
+document.querySelectorAll('#seg-jornada button').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('#seg-jornada button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+  };
+});
+document.getElementById('btn-config').onclick=async()=>{
+  cfg.nome=document.getElementById('cf-nome').value.trim();
+  cfg.valorHora=parseFloat(document.getElementById('cf-valor').value)||0;
+  cfg.jornada=parseInt(document.querySelector('#seg-jornada button.on').dataset.j);
+  cfg.extraPct=parseFloat(document.getElementById('cf-extra').value)||0;
+  cfg.intervalo=parseInt(document.getElementById('cf-intervalo').value)||0;
+  await store.set('config',JSON.stringify(cfg));
+  applyCfgToHeader();
+  updatePreview(); renderRecent(); renderReport();
+  toast('Configuração salva ✓');
+};
+function applyCfgToHeader(){
+  document.getElementById('appName').textContent = cfg.nome? `Ponto · ${cfg.nome}` : 'Ponto da Babá';
+}
+
+document.getElementById('btn-export').onclick=async()=>{
+  const data=JSON.stringify({config:cfg,registros},null,2);
+  try{ await navigator.clipboard.writeText(data); toast('Copiado para a área de transferência ✓'); }
+  catch(e){
+    // fallback: mostra numa janela para copiar manualmente
+    const w=window.open('','_blank'); if(w){w.document.write('<pre>'+escapeHtml(data)+'</pre>');} else {toast('Não foi possível copiar');}
+  }
+};
+document.getElementById('btn-limpar').onclick=async()=>{
+  if(!confirm('Apagar TODOS os registros? Esta ação não pode ser desfeita.')) return;
+  registros=[]; await store.set('registros',JSON.stringify(registros));
+  renderRecent(); renderReport(); toast('Registros apagados');
+};
+
+/* ---------------- Init ---------------- */
+async function init(){
+  // zera o estado antes de carregar (importante ao trocar de conta)
+  cfg={...defaultCfg}; registros=[]; sessao=null;
+
+  const c=await store.get('config');
+  if(c){ try{ cfg={...defaultCfg,...JSON.parse(c)}; }catch(e){} }
+  const rg=await store.get('registros');
+  if(rg){ try{ registros=JSON.parse(rg)||[]; }catch(e){} }
+  const ss=await store.get('sessao');
+  if(ss){ try{ sessao=JSON.parse(ss); }catch(e){} }
+
+  // preenche ajustes
+  document.getElementById('cf-nome').value=cfg.nome||'';
+  document.getElementById('cf-valor').value=cfg.valorHora||'';
+  document.getElementById('cf-extra').value=cfg.extraPct;
+  document.getElementById('cf-intervalo').value=cfg.intervalo||'';
+  document.querySelectorAll('#seg-jornada button').forEach(x=>x.classList.toggle('on',Number(x.dataset.j)===cfg.jornada));
+
+  // data de hoje no formulário
+  const today=new Date();
+  document.getElementById('in-data').value=`${today.getFullYear()}-${pad2(today.getMonth()+1)}-${pad2(today.getDate())}`;
+  document.getElementById('in-intervalo').value=cfg.intervalo||'';
+
+  applyCfgToHeader();
+  updatePreview();
+  renderLive();
+  renderRecent();
+}
+
+/* ---------------- Autenticação / arranque ---------------- */
+function showGate(){ document.getElementById('auth-gate').style.display='flex'; }
+function hideGate(){ document.getElementById('auth-gate').style.display='none'; }
+
+function traduzErro(code){
+  const m={
+    'auth/invalid-email':'E-mail inválido.',
+    'auth/missing-password':'Digite uma senha.',
+    'auth/weak-password':'A senha precisa de pelo menos 6 caracteres.',
+    'auth/email-already-in-use':'Este e-mail já tem conta. Toque em Entrar.',
+    'auth/invalid-credential':'E-mail ou senha incorretos.',
+    'auth/wrong-password':'Senha incorreta.',
+    'auth/user-not-found':'Conta não encontrada. Toque em Criar uma conta.',
+    'auth/network-request-failed':'Sem conexão. Verifique a internet.',
+    'auth/too-many-requests':'Muitas tentativas. Aguarde um pouco.'
+  };
+  return m[code] || ('Não foi possível: '+code);
+}
+async function doAuth(mode){
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-pass').value;
+  const err=document.getElementById('auth-err'); err.textContent='';
+  if(!email||!pass){ err.textContent='Preencha e-mail e senha.'; return; }
+  try{
+    if(mode==='up') await window.FB.createUserWithEmailAndPassword(window.FB.auth,email,pass);
+    else await window.FB.signInWithEmailAndPassword(window.FB.auth,email,pass);
+  }catch(e){ err.textContent=traduzErro(e.code||e.message); }
+}
+
+let started=false;
+async function bootstrap(){
+  if(started) return; started=true;
+
+  if(window.FB && window.FB.configured){
+    backend='firebase';
+    document.getElementById('auth-entrar').onclick=()=>doAuth('in');
+    document.getElementById('auth-criar').onclick=()=>doAuth('up');
+    document.getElementById('btn-logout').style.display='block';
+    document.getElementById('btn-logout').onclick=()=>window.FB.signOut(window.FB.auth);
+
+    window.FB.onAuthStateChanged(window.FB.auth, async (user)=>{
+      if(user){
+        uid=user.uid; hideGate();
+        document.getElementById('sync-status').textContent='Sincronizado online como '+user.email+'. Seus dados aparecem em qualquer aparelho.';
+        try{ await loadRemote(); }catch(e){ console.error(e); toast('Erro ao carregar dados'); }
+        await init();
+      }else{
+        uid=null; showGate();
+      }
+    });
+  }else{
+    backend='local'; hideGate();
+    document.getElementById('local-banner').style.display='block';
+    await init();
+  }
+}
+window.startApp = bootstrap;
+// rede segurança: se o módulo Firebase não carregar (ex.: sem internet), roda local
+setTimeout(()=>{ if(!started) bootstrap(); }, 2000);
+</script>
+</body>
+</html>
