@@ -1,0 +1,14 @@
+{
+  "name": "Controle de Horas",
+  "short_name": "Horas",
+  "description": "Apontamento de horas, aprovação e agenda de prestadores.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F5F0",
+  "theme_color": "#2f7a6b",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
